@@ -1,0 +1,100 @@
+Sub main()
+    Call DeleteAllShapes
+    Dim i As Integer, rows As Integer
+    Dim yPositionRange(10)
+    xPosition = 50
+    Set sh = ThisWorkbook.Sheets(1)
+    rows = sh.Range("A1", sh.Range("A1").End(xlDown)).rows.Count
+    'MsgBox rows
+    For i = 2 To rows
+        'MsgBox ThisWorkbook.Sheets(1).Cells(i, j).Value
+        'MsgBox sh.Cells(i, 1) & isshapeDetails(sh.Cells(i, 1))
+        If isshapeDetails(sh.Cells(i, 1)) <> 1 Then
+            Call drawEntity(sh.Cells(i, 1), xPosition + (sh.Cells(i, 4) - 1) * 270, 100 + yPositionRange(sh.Cells(i, 4) - 2) + yPositionRange(sh.Cells(i, 4) - 1))
+            yPositionRange(sh.Cells(i, 4) - 1) = yPositionRange(sh.Cells(i, 4) - 1) + 30
+        End If
+            If isshapeDetails(sh.Cells(i, 2)) <> 1 Then
+                If InStr(sh.Cells(i, 2), "STAGING") > 0 Then
+                    Call drawEntity(sh.Cells(i, 2), xPosition + (1 - 1) * 270, 100 + yPositionRange(1 - 1))
+                    yPositionRange(0) = yPositionRange(0) + 30
+                End If
+        End If
+    Next i
+    For i = 2 To rows
+        'MsgBox ThisWorkbook.Sheets(1).Cells(i, j).Value
+        'MsgBox sh.Cells(i, 1) & isshapeDetails(sh.Cells(i, 1))
+        If isshapeDetails(sh.Cells(i, 2)) <> 1 Then
+            Call drawEntity(sh.Cells(i, 2), xPosition + (1 - 1) * 270, 100 + yPositionRange(1 - 1))
+            yPositionRange(0) = yPositionRange(0) + 30
+        End If
+    Next i
+    Dim begin_x As Double, begin_y As Double
+    Dim end_x As Double, end_y As Double
+    For i = 2 To rows
+        For Each shp In ActiveSheet.Shapes
+            If StrComp(shp.name, sh.Cells(i, 2)) = 0 Then
+               begin_x = shp.Left
+               begin_y = shp.Top
+            End If
+            If StrComp(shp.name, sh.Cells(i, 1)) = 0 Then
+                end_x = shp.Left
+                end_y = shp.Top
+            End If
+        Next shp
+        Call drawConnector(sh.Cells(i, 2), sh.Cells(i, 1), begin_x, begin_y, end_x, end_y)
+    Next i
+End Sub
+
+Sub drawEntity(entityName As String, xPosition As Integer, yPosition As Integer)
+'
+' drawEntity Macro
+'
+
+'
+    ActiveSheet.Shapes.AddShape(msoShapeRectangle, xPosition, yPosition, 200, 15).Select
+    Selection.ShapeRange.name = entityName
+    Selection.ShapeRange.TextFrame2.VerticalAnchor = msoAnchorMiddle
+    Selection.ShapeRange(1).TextFrame2.TextRange.Characters.Text = entityName
+    Selection.ShapeRange.TextFrame2.VerticalAnchor = msoAnchorMiddle
+    Selection.ShapeRange.TextFrame2.TextRange.ParagraphFormat.Alignment = _
+        msoAlignCenter
+End Sub
+
+Sub drawConnector(beginEntity As String, endEntity As String, begin_x As Double, begin_y As Double, end_x As Double, end_y As Double)
+    ActiveSheet.Shapes.AddConnector(msoConnectorStraight, begin_x, begin_y, end_x, end_y).Select
+    Selection.ShapeRange.Line.EndArrowheadStyle = msoArrowheadTriangle
+    Selection.ShapeRange.ConnectorFormat.BeginConnect ActiveSheet.Shapes(beginEntity), 4
+    Selection.ShapeRange.ConnectorFormat.EndConnect ActiveSheet.Shapes(endEntity), 2
+    Selection.ShapeRange.ShapeStyle = msoLineStylePreset8
+    Selection.ShapeRange.ZOrder msoSendBackward
+End Sub
+Public Function isshapeDetails(name As String)
+    isshapeDetails = 0
+    'MsgBox name
+    For Each shp In ActiveSheet.Shapes
+        If StrComp(shp.name, name) = 0 Then
+            isshapeDetails = 1
+            Exit For
+        End If
+    Next shp
+    'MsgBox isshapeDetails
+End Function
+
+Private Sub Workbook_Open()
+
+End Sub
+
+Sub DeleteAllShapes()
+'PURPOSE: Remove All Shape Objects From The Active Worksheet
+'SOURCE: www.TheSpreadsheetGuru.com/the-code-vault
+
+Dim shp As Shape
+
+For Each shp In ActiveSheet.Shapes
+    If StrComp(shp.name, "showDependency") <> 0 Then
+        shp.Delete
+    End If
+Next shp
+
+End Sub
+
